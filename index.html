@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure File Encryption</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --accent-color: #4caf50;
+            --danger-color: #f44336;
+            --light-bg: #f5f7fa;
+            --dark-bg: #2c3e50;
+            --text-color: #333;
+            --light-text: #f5f5f5;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #777;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .file-input-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .file-input-container:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .file-input-container i {
+            font-size: 48px;
+            color: #ccc;
+            margin-bottom: 10px;
+        }
+        
+        .file-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .file-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .selected-file {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #e9f5e9;
+            border-radius: 4px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        button {
+            padding: 12px 24px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        .download-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: var(--accent-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .download-link:hover {
+            background-color: #3d8b40;
+        }
+        
+        .loader {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .alert {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .alert-error {
+            background-color: #ffebee;
+            color: var(--danger-color);
+            border: 1px solid #ffcdd2;
+        }
+        
+        .alert-success {
+            background-color: #e8f5e9;
+            color: var(--accent-color);
+            border: 1px solid #c8e6c9;
+        }
+        
+        .icon {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background-size: contain;
+            vertical-align: middle;
+        }
+        
+        .icon-upload {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23aaa' d='M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z'/%3E%3C/svg%3E");
+        }
+        
+        .icon-key {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23aaa' d='M22 19h-6v-4h-2.68c-1.14 2.42-3.6 4-6.32 4-3.86 0-7-3.14-7-7s3.14-7 7-7c2.72 0 5.17 1.58 6.32 4H24v6h-2v4zm-4-2h2v-4h2v-2H11.94l-.23-.67C11.01 8.34 9.11 7 7 7c-2.76 0-5 2.24-5 5s2.24 5 5 5c2.11 0 4.01-1.34 4.71-3.33l.23-.67H18v4zM7 15c-1.65 0-3-1.35-3-3s1.35-3 3-3 3 1.35 3 3-1.35 3-3 3zm0-4c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z'/%3E%3C/svg%3E");
+        }
+        
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #777;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Secure File Encryption</h1>
+            <p>Encrypt and decrypt your files with military-grade encryption</p>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab-button active" data-tab="encrypt">Encrypt File</button>
+            <button class="tab-button" data-tab="decrypt">Decrypt File</button>
+        </div>
+        
+        <div id="encrypt-tab" class="tab-content active">
+            <form id="encrypt-form">
+                <div class="form-group">
+                    <label for="encrypt-file">Select File to Encrypt</label>
+                    <div class="file-input-container">
+                        <span class="icon icon-upload"></span>
+                        <p>Drag & drop your file here or click to browse</p>
+                        <input type="file" id="encrypt-file" class="file-input" required>
+                        <p class="file-info">Any file type supported (Max: 50MB)</p>
+                    </div>
+                    <div class="selected-file" id="encrypt-file-name"></div>
+                </div>
+                
+                <button type="submit" id="encrypt-btn">Encrypt File</button>
+            </form>
+            
+            <div class="loader" id="encrypt-loader"></div>
+            <div class="alert alert-error" id="encrypt-error"></div>
+            
+            <div class="result-section" id="encrypt-result">
+                <div class="result-title">Encryption Complete!</div>
+                <p>Your file has been successfully encrypted. Please download both the encrypted file and the key file.</p>
+                <p><strong>Important:</strong> You will need the key file to decrypt this file later.</p>
+                
+                <div>
+                    <a href="#" id="encrypted-file-link" class="download-link">Download Encrypted File</a>
+                </div>
+                <div>
+                    <a href="#" id="key-file-link" class="download-link">Download Key File</a>
+                </div>
+            </div>
+        </div>
+        
+        <div id="decrypt-tab" class="tab-content">
+            <form id="decrypt-form">
+                <div class="form-group">
+                    <label for="decrypt-file">Select Encrypted File</label>
+                    <div class="file-input-container">
+                        <span class="icon icon-upload"></span>
+                        <p>Drag & drop your encrypted file here or click to browse</p>
+                        <input type="file" id="decrypt-file" class="file-input" required>
+                        <p class="file-info">Select the encrypted file you want to decrypt</p>
+                    </div>
+                    <div class="selected-file" id="decrypt-file-name"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="key-file">Select Key File</label>
+                    <div class="file-input-container">
+                        <span class="icon icon-key"></span>
+                        <p>Drag & drop your key file here or click to browse</p>
+                        <input type="file" id="key-file" class="file-input" required>
+                        <p class="file-info">Select the key file used to encrypt this file</p>
+                    </div>
+                    <div class="selected-file" id="key-file-name"></div>
+                </div>
+                
+                <button type="submit" id="decrypt-btn">Decrypt File</button>
+            </form>
+            
+            <div class="loader" id="decrypt-loader"></div>
+            <div class="alert alert-error" id="decrypt-error"></div>
+            
+            <div class="result-section" id="decrypt-result">
+                <div class="result-title">Decryption Complete!</div>
+                <p>Your file has been successfully decrypted and is ready for download.</p>
+                
+                <div>
+                    <a href="#" id="decrypted-file-link" class="download-link">Download Decrypted File</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Secure File Encryption Tool &copy; 2025 | All data is processed locally</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    
+                    // Update active tab button
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show the selected tab content
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === tabName + '-tab') {
+                            content.classList.add('active');
+                        }
+                    });
+                    
+                    // Reset forms when switching tabs
+                    resetForm('encrypt');
+                    resetForm('decrypt');
+                });
+            });
+            
+            // File input handling
+            const fileInputs = document.querySelectorAll('.file-input');
+            
+            fileInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    const fileNameElement = document.getElementById(this.id + '-name');
+                    
+                    if (this.files.length > 0) {
+                        const file = this.files[0];
+                        fileNameElement.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+                        fileNameElement.style.display = 'block';
+                    } else {
+                        fileNameElement.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Encryption form submission
+            const encryptForm = document.getElementById('encrypt-form');
+            
+            encryptForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const fileInput = document.getElementById('encrypt-file');
+                if (!fileInput.files.length) {
+                    showError('encrypt', 'Please select a file to encrypt');
+                    return;
+                }
+                
+                const file = fileInput.files[0];
+                
+                // Check file size (limit to 50MB)
+                if (file.size > 50 * 1024 * 1024) {
+                    showError('encrypt', 'File size exceeds the 50MB limit');
+                    return;
+                }
+                
+                // Start the encryption process
+                startLoading('encrypt');
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                fetch('/encrypt', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Encryption failed');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    stopLoading('encrypt');
+                    
+                    // Set download links
+                    document.getElementById('encrypted-file-link').href = data.encrypted_url;
+                    document.getElementById('key-file-link').href = data.key_url;
+                    
+                    // Show results
+                    document.getElementById('encrypt-result').style.display = 'block';
+                })
+                .catch(error => {
+                    stopLoading('encrypt');
+                    showError('encrypt', error.message || 'An error occurred during encryption');
+                });
+            });
+            
+            // Decryption form submission
+            const decryptForm = document.getElementById('decrypt-form');
+            
+            decryptForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const fileInput = document.getElementById('decrypt-file');
+                const keyInput = document.getElementById('key-file');
+                
+                if (!fileInput.files.length) {
+                    showError('decrypt', 'Please select an encrypted file');
+                    return;
+                }
+                
+                if (!keyInput.files.length) {
+                    showError('decrypt', 'Please select a key file');
+                    return;
+                }
+                
+                // Start the decryption process
+                startLoading('decrypt');
+                
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                formData.append('key', keyInput.files[0]);
+                
+                fetch('/decrypt', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Decryption failed. Please make sure you are using the correct key file.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    stopLoading('decrypt');
+                    
+                    // Set download link
+                    document.getElementById('decrypted-file-link').href = data.decrypted_url;
+                    
+                    // Show results
+                    document.getElementById('decrypt-result').style.display = 'block';
+                })
+                .catch(error => {
+                    stopLoading('decrypt');
+                    showError('decrypt', error.message || 'An error occurred during decryption');
+                });
+            });
+            
+            // Helper functions
+            function resetForm(formType) {
+                document.getElementById(`${formType}-form`).reset();
+                document.getElementById(`${formType}-file-name`).style.display = 'none';
+                document.getElementById(`${formType}-result`).style.display = 'none';
+                document.getElementById(`${formType}-error`).style.display = 'none';
+                
+                if (formType === 'decrypt') {
+                    document.getElementById('key-file-name').style.display = 'none';
+                }
+            }
+            
+            function startLoading(formType) {
+                document.getElementById(`${formType}-btn`).disabled = true;
+                document.getElementById(`${formType}-loader`).style.display = 'block';
+                document.getElementById(`${formType}-error`).style.display = 'none';
+            }
+            
+            function stopLoading(formType) {
+                document.getElementById(`${formType}-btn`).disabled = false;
+                document.getElementById(`${formType}-loader`).style.display = 'none';
+            }
+            
+            function showError(formType, message) {
+                const errorElement = document.getElementById(`${formType}-error`);
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+                
+                // Auto hide after 5 seconds
+                setTimeout(() => {
+                    errorElement.style.display = 'none';
+                }, 5000);
+            }
+            
+            function formatFileSize(bytes) {
+                if (bytes < 1024) {
+                    return bytes + ' bytes';
+                } else if (bytes < 1024 * 1024) {
+                    return (bytes / 1024).toFixed(2) + ' KB';
+                } else {
+                    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+                }
+            }
+            
+            // Drag and drop functionality
+            const dropAreas = document.querySelectorAll('.file-input-container');
+            
+            dropAreas.forEach(area => {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    area.addEventListener(eventName, preventDefaults, false);
+                });
+                
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    area.addEventListener(eventName, highlight, false);
+                });
+                
+                ['dragleave', 'drop'].forEach(eventName => {
+                    area.addEventListener(eventName, unhighlight, false);
+                });
+                
+                function highlight() {
+                    area.style.borderColor = '#4a6fa5';
+                    area.style.backgroundColor = '#f0f8ff';
+                }
+                
+                function unhighlight() {
+                    area.style.borderColor = '#ccc';
+                    area.style.backgroundColor = '';
+                }
+                
+                area.addEventListener('drop', handleDrop, false);
+                
+                function handleDrop(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    const input = area.querySelector('input[type="file"]');
+                    
+                    input.files = files;
+                    input.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+    </script>
+</body>
+</html>
